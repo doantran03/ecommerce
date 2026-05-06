@@ -13,17 +13,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.33.0
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
 
       - name: Build Project
-        run: npm run build
+        run: pnpm run build
 
       - name: Deploy to VPS via SCP
         uses: appleboy/scp-action@v0.1.7
@@ -32,7 +37,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
-          source: '.next,dist,node_modules,package.json,package-lock.json,public,next.config.js,payload.config.ts'
+          source: '.next,public,package.json,pnpm-lock.yaml,next.config.ts,payload.config.ts'
           target: ${{ secrets.SSH_PATH }}
           rm: false
 
@@ -46,9 +51,13 @@ jobs:
           script: |
             cd ${{ secrets.SSH_PATH }}
 
-            if [ ! -f .env ]; then
-              echo "Cảnh báo: File .env không tồn tại trên server!"
+            export PNPM_HOME="/home/${{ secrets.SSH_USER }}/.local/share/pnpm"
+            export PATH="$PNPM_HOME:$PATH"
+            if ! command -v pnpm &> /dev/null; then
+              npm install -g pnpm
             fi
+
+            pnpm install --prod
 
             pm2 reload payload-app || pm2 start npm --name "payload-app" -- start
 
