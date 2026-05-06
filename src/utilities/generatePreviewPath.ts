@@ -1,7 +1,11 @@
-import { PreviewSearchParams } from '@/app/(frontend)/next/preview/route'
-import { PayloadRequest, CollectionSlug } from 'payload'
+import { PayloadRequest } from 'payload'
 
-const collectionPrefixMap: Partial<Record<CollectionSlug, string>> = {
+export interface PreviewSearchParams {
+  path: string
+  previewSecret: string
+}
+
+const collectionPrefixMap: Partial<Record<string, string>> = {
   posts: '/posts',
   pages: '',
 }
